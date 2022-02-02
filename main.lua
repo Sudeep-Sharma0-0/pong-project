@@ -6,8 +6,11 @@ require "assets.Paddle"
 
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
-VIRTUAL_WIDTH = 432
-VIRTUAL_HEIGHT = 243
+VIRTUAL_WIDTH = 512
+VIRTUAL_HEIGHT = 288
+
+WIDTH_SCALE = WINDOW_WIDTH / VIRTUAL_WIDTH
+HEIGHT_SCALE = WINDOW_HEIGHT / VIRTUAL_HEIGHT
 
 PADDLE1_X = 5
 PADDLE2_X = VIRTUAL_WIDTH - 10
@@ -59,7 +62,7 @@ function love.load()
 
     servingState = math.random(2)
     winningPlayer = 0
-    gameState = "start"
+    gameState = "main_menu"
 end
 
 function love.keypressed(key)
@@ -75,8 +78,37 @@ function love.keypressed(key)
         elseif winningPlayer == 1 or winningPlayer == 2 then
             gameState = "finish"
         else
-            gameState = "start"
+            gameState = "main_menu"
             ball:reset()
+        end
+    end
+
+    fs = love.window.getFullscreen()
+
+    if key == "f11" then
+        if fs == false then
+            love.window.setFullscreen(true, "exclusive") 
+        end
+
+        if fs == true then
+            love.window.setFullscreen(false, "exclusive")
+        end
+    end
+end
+
+function love.mousepressed(x, y, button, istouch)
+    xBoundsI = ((VIRTUAL_WIDTH * WIDTH_SCALE)/2) - 50
+    yBoundsI = ((VIRTUAL_HEIGHT * HEIGHT_SCALE)/2) - 10
+
+    xBoundsII = ((VIRTUAL_WIDTH * WIDTH_SCALE)/2) + 50
+    yBoundsII = ((VIRTUAL_WIDTH * HEIGHT_SCALE)/2) + 10
+
+    if gameState == "main_menu" then
+        if button == 1 then
+            print("x: " .. x .. " y: " .. y)
+            if x > xBoundsI and x < xBoundsII and y > yBoundsI and y < yBoundsII then
+               gameState = "start"
+            end
         end
     end
 end
@@ -191,29 +223,35 @@ end
 function love.draw()
     push:start()
 
-    love.graphics.clear(40/255, 45/255, 52/255, 1)
-
-    displayScores()
-
-    love.graphics.setFont(header_font8px)
-    love.graphics.setColor(1, 1, 1, 1)
-    
-    if gameState == "start" then
-        love.graphics.printf("Hello, Welcome to Pong! Press Enter to Play.", 0, 10, VIRTUAL_WIDTH, "center")
-    elseif gameState == "playing" then
-        love.graphics.printf("Get 10 points to win!", 0, 10, VIRTUAL_WIDTH, "center")
-    elseif gameState == "serve" then
-        love.graphics.setFont(header_font14px)
-        love.graphics.printf("Serving turn player: " .. tostring(servingState) .. ". Press Enter!", 0, 10, VIRTUAL_WIDTH, "center")
+    if gameState == "main_menu" then
+        mainMenu()
     else
-        love.graphics.printf("Player " .. tostring(winningPlayer) .. " won the match. Press Enter to Restart", 0, 10, VIRTUAL_WIDTH, "center")
+        love.graphics.clear(40/255, 45/255, 52/255, 1)
+    
+        displayScores()
+    
+        love.graphics.setFont(header_font8px)
+        love.graphics.setColor(1, 1, 1, 1)
+       
+        if gameState == "start" then
+            love.graphics.printf("Hello, Welcome to Pong! Press Enter to Play.", 0, 10, VIRTUAL_WIDTH, "center")
+        elseif gameState == "playing" then
+            love.graphics.printf("Get 10 points to win!", 0, 10, VIRTUAL_WIDTH, "center")
+        elseif gameState == "serve" then
+            love.graphics.setFont(header_font14px)
+            love.graphics.printf("Serving turn player: " .. tostring(servingState) .. ". Press Enter!", 0, 10, VIRTUAL_WIDTH, "center")
+        else
+            love.graphics.setFont(header_font14px)
+            love.graphics.printf("Player " .. tostring(winningPlayer + 1) .. " won the match. Press Enter to Restart", 0, 10, VIRTUAL_WIDTH, "center")
+        end
+    
+        ball:render()
+        player1:render()
+        player2:render()
+    
+        showFPS()
     end
 
-    ball:render()
-    player1:render()
-    player2:render()
-
-    showFPS()
     push:finish()
 end
 
@@ -227,9 +265,22 @@ function displayScores()
     love.graphics.print(tostring(PLAYER2_SCORE) .. " pts", VIRTUAL_WIDTH / 2 + 40, VIRTUAL_WIDTH / 9)
 end
 
-
 function showFPS()
     love.graphics.setFont(header_font14px)
     love.graphics.setColor(0, 1, 0, 1)
     love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
 end
+
+function mainMenu()
+    love.graphics.setFont(header_font20px)
+    love.graphics.printf("Welcome to PONG!!", 0, 30, VIRTUAL_WIDTH, "center")
+
+    love.graphics.setFont(header_font14px)
+    love.graphics.printf("Start", (VIRTUAL_WIDTH / 2) - 50, (VIRTUAL_HEIGHT / 2) - 7, 100, "center")
+    love.graphics.rectangle("line", (VIRTUAL_WIDTH / 2) - 50, (VIRTUAL_HEIGHT / 2) - 10, 100, 20)
+end
+
+function love.resize(w, h)
+    push:resize(w, h)
+end
+
